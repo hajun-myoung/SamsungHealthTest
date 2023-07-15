@@ -12,15 +12,6 @@
         <meta-data
             android:name="com.samsung.android.health.permission.read"
             android:value="com.samsung.health.step_count" />
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
     </application>
     <queries>
         <package android:name="com.sec.android.app.shealth" />
