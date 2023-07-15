@@ -25,6 +25,7 @@ package com.example.samsunghealthtest
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import com.samsung.android.sdk.healthdata.HealthConnectionErrorResult
 import com.samsung.android.sdk.healthdata.HealthConstants.StepCount
 import com.samsung.android.sdk.healthdata.HealthDataStore
 import com.samsung.android.sdk.healthdata.HealthDataStore.ConnectionListener
@@ -32,19 +33,17 @@ import com.samsung.android.sdk.healthdata.HealthPermissionManager
 import com.samsung.android.sdk.healthdata.HealthPermissionManager.PermissionKey
 import com.samsung.android.sdk.healthdata.HealthPermissionManager.PermissionType
 import java.lang.Boolean
-import kotlin.Exception
 import kotlin.String
-
 
 // Season 4th Kotlin challenge _ I think I might be a silly...
 class MainActivity: AppCompatActivity() {
     var APP_TAG: String = "SamsungHealthTest"
 
-    override fun onCraete(savedInstanceState: Bundle?){
+    private var mStore: HealthDataStore? =  null // Data will be store here
+
+    override fun onCreate(savedInstanceState: Bundle?){
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        val mStore: HealthDataStore? = null
 
         /**
          * In official documentation, Samsung developers are using the Java. like...
@@ -53,21 +52,30 @@ class MainActivity: AppCompatActivity() {
          * An anonymous function on Java is equal to an Object on Kotlin
          */
 
-        val mConnectionListener: ConnectionListener = object : ConnectionListener {
-            override fun onConnected() {
-                Log.d(APP_TAG, "Health data service is connected.")
-                val pmsManager = HealthPermissionManager(mStore)
-                try {
-                    println("Connected to the Samsung Health with using SDK for SH")
-
-                    // Handle the permission, first
-                    requestPermission() // Define permission requester explicitly
-                } catch (e: Exception) {
-                    Log.e(APP_TAG, e.javaClass.name + " - " + e.message)
-                    Log.e(APP_TAG, "Permission setting fails.")
+        mStore = HealthDataStore(this, object : ConnectionListener {
+            override fun onConnectionFailed(p0: HealthConnectionErrorResult?) {
+                println("[Error] Connection Failed to Samsung Health")
+                if (p0 != null) {
+                    println(p0.errorCode)
+                    Log.e(APP_TAG, p0?.errorCode.toString())
                 }
             }
-        }
+            override fun onConnected() {
+                println("[Info] Successfully connected to Samsung Health")
+                Log.d(APP_TAG, "Health data service is connected.")
+                // Handle the permission, first
+                requestPermission() // Define permission requester explicitly
+//                if(isPermissionAcquired()){
+//
+//                }
+            }
+
+            override fun onDisconnected() {
+                println("Disconnected")
+            }
+        })
+
+        mStore?.connectService()
     }
 
     private fun requestPermission() {
