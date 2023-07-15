@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.samsung.android.sdk.healthdata.HealthConnectionErrorResult;
 import com.samsung.android.sdk.healthdata.HealthConstants;
@@ -12,9 +13,13 @@ import com.samsung.android.sdk.healthdata.HealthDataStore;
 import com.samsung.android.sdk.healthdata.HealthPermissionManager;
 import com.samsung.android.sdk.healthdata.HealthResultHolder;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import com.example.samsunghealthtest.databinding.ActivityMainBinding;
 
 public class MainActivity extends Activity {
 
@@ -31,6 +36,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         mInstance = this;
         mKeySet = new HashSet<HealthPermissionManager.PermissionKey>();
+
         mKeySet.add(new HealthPermissionManager.PermissionKey(HealthConstants.StepCount.HEALTH_DATA_TYPE, HealthPermissionManager.PermissionType.READ));
         // Create a HealthDataStore instance and set its listener
         mStore = new HealthDataStore(this, mConnectionListener);
@@ -54,16 +60,22 @@ public class MainActivity extends Activity {
             try {
                 // Check whether the permissions that this application needs are acquired
                 // Request the permission for reading step counts if it is not acquired
+
                 Map<HealthPermissionManager.PermissionKey, Boolean> resultMap = pmsManager.isPermissionAcquired(mKeySet);
 
                 // Get the current step count and display it if data permission is required
                 // ...
                 if (resultMap.containsValue(Boolean.FALSE)) {
+                    Toast.makeText(MainActivity.this, "The permission not set yet", Toast.LENGTH_SHORT).show();
                     // Request the permission for reading step counts if it is not acquired
-                    pmsManager.requestPermissions(mKeySet, MainActivity.this).setResultListener(mPermissionListener);
+                    HealthPermissionManager.PermissionKey permKey = new HealthPermissionManager.PermissionKey(HealthConstants.StepCount.HEALTH_DATA_TYPE, HealthPermissionManager.PermissionType.READ);
+//                    pmsManager.requestPermissions(mKeySet, MainActivity.this).setResultListener(mPermissionListener);
+                    pmsManager.requestPermissions(Collections.singleton(permKey), MainActivity.this).setResultListener(mPermissionListener);
+                    Toast.makeText(MainActivity.this, mPermissionListener.toString(), Toast.LENGTH_SHORT).show();
                 } else {
                     // Get the current step count and display it
                     // ...
+                    Toast.makeText(MainActivity.this, "The permission has been set already", Toast.LENGTH_SHORT).show();
                 }
             } catch (Exception e) {
                 Log.e(APP_TAG, e.getClass().getName() + " - " + e.getMessage());
