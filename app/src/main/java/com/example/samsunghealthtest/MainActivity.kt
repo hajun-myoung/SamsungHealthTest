@@ -1,7 +1,7 @@
 /**
  * # Copyright
  *
- * @author : DENVER(hajun)<fe.dev.denver@gmail.com>
+ * @author : DENVER(hajun)<fe.dev.denver@gmail.com> at AIT Studio
  * @message1 : Thanks to Samsung, but...could you please give me a official docus with Kotlin version...?
  * @message2 : Well, I know...I am a silly...
  * @message3 : But I beat you, SAMSUNG! Ha-hA!
@@ -52,16 +52,18 @@ class MainActivity: AppCompatActivity() {
          * An anonymous function on Java is equal to an Object on Kotlin
          */
 
+        // CAUTION! In the Kotlin, function() { ... } structure doesn't mean the scope itself.
+        // It's an anonymous function { ... } like a lambda expression in Python or () => {} in JS
+
         mStore = HealthDataStore(this, object : ConnectionListener {
             override fun onConnectionFailed(p0: HealthConnectionErrorResult?) {
-                println("[Error] Connection Failed to Samsung Health")
+                Log.e(APP_TAG, "Connection Failed to Samsung Health")
                 if (p0 != null) {
-                    println(p0.errorCode)
                     Log.e(APP_TAG, p0?.errorCode.toString())
                 }
             }
+
             override fun onConnected() {
-                println("[Info] Successfully connected to Samsung Health")
                 Log.d(APP_TAG, "Health data service is connected.")
                 // Handle the permission, first
                 requestPermission() // Define permission requester explicitly
@@ -71,7 +73,7 @@ class MainActivity: AppCompatActivity() {
             }
 
             override fun onDisconnected() {
-                println("Disconnected")
+                Log.d(APP_TAG, "Disconnected from the SH")
             }
         })
 
@@ -79,7 +81,7 @@ class MainActivity: AppCompatActivity() {
     }
 
     private fun requestPermission() {
-        println("Requesting permission...")
+        Log.d(APP_TAG, "Requesting permission...")
 
         // Permission list that I need
         val stepPermissionKey = PermissionKey(StepCount.HEALTH_DATA_TYPE, PermissionType.READ)
@@ -95,9 +97,9 @@ class MainActivity: AppCompatActivity() {
             // pmsManager.requestPermissions(mutableSetOf(stepPermissionKey, heartRatePermissionKey), this@MainActivity)
             // ⬆️ If I got another permissions need to request
                 .setResultListener { result: HealthPermissionManager.PermissionResult ->
-                    println("Permission has been requested. setResultListener callback is called.")
+                    Log.d(APP_TAG, "Permission has been requested. setResultListener callback is called.")
                     val resultMap = result.resultMap
-                    println(resultMap.entries) // print all of resultMap
+                    Log.d(APP_TAG, resultMap.entries.toString())
 
                     if (resultMap.containsValue(Boolean.FALSE)) {
                         /**
@@ -111,9 +113,7 @@ class MainActivity: AppCompatActivity() {
                     }
                 }
         } catch (e: java.lang.Exception) {
-            Log.e(APP_TAG, "Permission setting fails.", e)
-            println("Permission setting has been failed")
-            println(e)
+            Log.e(APP_TAG, "Permission setting has been failed", e)
         }
     }
 }
