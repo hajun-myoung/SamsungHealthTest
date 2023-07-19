@@ -27,7 +27,7 @@ import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.samsung.android.sdk.healthdata.*
-import com.samsung.android.sdk.healthdata.HealthConstants.HeartRate
+//import com.samsung.android.sdk.healthdata.HealthConstants.HeartRate
 import com.samsung.android.sdk.healthdata.HealthConstants.StepCount
 import com.samsung.android.sdk.healthdata.HealthDataStore.ConnectionListener
 import com.samsung.android.sdk.healthdata.HealthPermissionManager.PermissionKey
@@ -169,10 +169,11 @@ class MainActivity: AppCompatActivity() {
 
         // Permission list that I need
         val stepPermissionKey = PermissionKey(StepCount.HEALTH_DATA_TYPE, PermissionType.READ)
-        val heartRatePermissionKey = PermissionKey(HeartRate.HEALTH_DATA_TYPE, PermissionType.READ)
+//        val heartRatePermissionKey = PermissionKey(HeartRate.HEALTH_DATA_TYPE, PermissionType.READ)
 
         // Show user permission UI for allowing user to change options
-        val permissionKeys = setOf(stepPermissionKey, heartRatePermissionKey)
+//        val permissionKeys = setOf(stepPermissionKey, heartRatePermissionKey)
+        val permissionKeys = setOf(stepPermissionKey)
 
         // Permission Manager
         val pmsManager = HealthPermissionManager(mStore)
