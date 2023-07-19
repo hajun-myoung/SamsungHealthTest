@@ -27,14 +27,18 @@ import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.samsung.android.sdk.healthdata.*
+import com.samsung.android.sdk.healthdata.HealthConstants.HeartRate
 import com.samsung.android.sdk.healthdata.HealthConstants.StepCount
 import com.samsung.android.sdk.healthdata.HealthDataStore.ConnectionListener
 import com.samsung.android.sdk.healthdata.HealthPermissionManager.PermissionKey
 import com.samsung.android.sdk.healthdata.HealthPermissionManager.PermissionType
 import java.lang.Boolean
-import java.lang.Exception
 import java.util.*
+import kotlin.Exception
+import kotlin.Long
+import kotlin.Number
 import kotlin.String
+import kotlin.arrayOf
 
 // Season 4th Kotlin challenge _ I think I might be a silly...
 class MainActivity: AppCompatActivity() {
@@ -68,10 +72,12 @@ class MainActivity: AppCompatActivity() {
             override fun onConnected() {
                 Log.d(APP_TAG, "Health data service is connected.")
                 // Handle the permission, first
-                requestPermission() // Define permission requester explicitly
                 if(isPermissionAcquired()){
                     Log.d(APP_TAG, "Permission is acquired. Try to get some data.")
                     getStepCount()
+                }
+                else{
+                    requestPermission() // Define permission requester explicitly
                 }
             }
 
@@ -143,13 +149,13 @@ class MainActivity: AppCompatActivity() {
 
     private fun isPermissionAcquired(): kotlin.Boolean {
         val stepPermKey = PermissionKey(StepCount.HEALTH_DATA_TYPE, PermissionType.READ)
-        val permissionKeys = mutableSetOf(stepPermKey)
+        val permissionKeys = setOf(stepPermKey)
 
         val pmsManager = HealthPermissionManager(mStore)
 
         try{
             val resultMap = pmsManager.isPermissionAcquired(permissionKeys)
-            return resultMap[stepPermKey] ?: false
+            return !resultMap.containsValue(Boolean.FALSE)
         }
         catch(e: Exception){
             Log.e(APP_TAG, "isPermissionAcquired fail", e)
@@ -163,21 +169,26 @@ class MainActivity: AppCompatActivity() {
 
         // Permission list that I need
         val stepPermissionKey = PermissionKey(StepCount.HEALTH_DATA_TYPE, PermissionType.READ)
-        // val heartRatePermissionKey = PermissionKey(HeartRate.HEALTH_DATA_TYPE, PermissionType.READ)
+        val heartRatePermissionKey = PermissionKey(HeartRate.HEALTH_DATA_TYPE, PermissionType.READ)
+
+        // Show user permission UI for allowing user to change options
+        val permissionKeys = setOf(stepPermissionKey, heartRatePermissionKey)
 
         // Permission Manager
         val pmsManager = HealthPermissionManager(mStore)
 
         // Try to request the permissions
         try {
-            // Show user permission UI for allowing user to change options
-            val permissionKeys = mutableSetOf(stepPermissionKey)
-
             pmsManager.requestPermissions(permissionKeys, this)
-                .setResultListener { result: HealthPermissionManager.PermissionResult ->
+                .setResultListener { result ->
                     Log.d(APP_TAG, "Permission has been requested. setResultListener callback is called.")
                     val resultMap = result.resultMap
-                    Log.d(APP_TAG, resultMap.entries.toString())
+
+                    val newAlert = AlertDialog.Builder(this)
+                    newAlert.setTitle("Notice")
+                        .setMessage(resultMap.toString())
+                        .setPositiveButton("OK", null)
+                        .show()
 
                     if (resultMap.containsValue(Boolean.FALSE)) {
                         // When be rejected some permissions
