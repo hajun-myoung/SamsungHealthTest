@@ -26,14 +26,14 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.samsung.android.sdk.healthdata.HealthConnectionErrorResult
+import com.samsung.android.sdk.healthdata.*
 import com.samsung.android.sdk.healthdata.HealthConstants.StepCount
-import com.samsung.android.sdk.healthdata.HealthDataStore
 import com.samsung.android.sdk.healthdata.HealthDataStore.ConnectionListener
-import com.samsung.android.sdk.healthdata.HealthPermissionManager
 import com.samsung.android.sdk.healthdata.HealthPermissionManager.PermissionKey
 import com.samsung.android.sdk.healthdata.HealthPermissionManager.PermissionType
 import java.lang.Boolean
+import java.lang.Exception
+import java.util.*
 import kotlin.String
 
 // Season 4th Kotlin challenge _ I think I might be a silly...
@@ -41,6 +41,7 @@ class MainActivity: AppCompatActivity() {
     var APP_TAG: String = "SamsungHealthTest"
 
     private var mStore: HealthDataStore? =  null // Data will be store here
+    private var mResolver: HealthDataResolver? = null
 
     override fun onCreate(savedInstanceState: Bundle?){
         super.onCreate(savedInstanceState)
@@ -68,9 +69,10 @@ class MainActivity: AppCompatActivity() {
                 Log.d(APP_TAG, "Health data service is connected.")
                 // Handle the permission, first
                 requestPermission() // Define permission requester explicitly
-//                if(isPermissionAcquired()){
-//
-//                }
+                if(isPermissionAcquired()){
+                    Log.d(APP_TAG, "Permission is acquired. Try to get some data.")
+                    getStepCount()
+                }
             }
 
             override fun onDisconnected() {
@@ -79,6 +81,81 @@ class MainActivity: AppCompatActivity() {
         })
 
         mStore?.connectService()
+    }
+
+    private fun getStepCount(mode: Number? = 1) {
+        if(mode == 1){
+            //get today step count
+            val startTime = getToday()
+            val ONE_DAY_IN_MS = 24 * 60 * 60 * 1000L
+            val endTime = startTime + ONE_DAY_IN_MS
+
+            val properties = arrayOf(
+                StepCount.COUNT,
+                StepCount.CREATE_TIME,
+                StepCount.DEVICE_UUID
+            )
+
+            val request = HealthDataResolver.ReadRequest.Builder()
+                .setDataType(HealthConstants.StepCount.HEALTH_DATA_TYPE)
+                .setProperties(properties)
+                .setLocalTimeRange(StepCount.START_TIME, StepCount.TIME_OFFSET, startTime, endTime)
+                .build()
+
+            mResolver = HealthDataResolver(mStore, null)
+
+            try{
+                mResolver?.read(request)?.setResultListener { result ->
+                    try{
+                        val iterator = result.iterator()
+                        while(iterator.hasNext()){
+                            val data = iterator.next()
+                            val totalCount = data.getInt(StepCount.COUNT)
+                            val uuid = data.getString(StepCount.DEVICE_UUID)
+                            val time = data.getFloat(StepCount.CREATE_TIME)
+                            Log.d(APP_TAG, "$time $totalCount $uuid")
+                        }
+                    }
+                    finally{
+                        result.close()
+                    }
+                }
+            }catch(e: Exception){
+                Log.e(APP_TAG, e.toString())
+            }
+        }
+    }
+
+    private fun getToday(): Long {
+        val today = Calendar.getInstance(TimeZone.getTimeZone("GMT+9:00"))
+
+        today.set(Calendar.HOUR_OF_DAY, 0)
+        today.set(Calendar.MINUTE, 0)
+        today.set(Calendar.SECOND, 0)
+        today.set(Calendar.MILLISECOND, 0)
+
+        val result: Long = today.timeInMillis
+        val logString = "The time is $result"
+        Log.e(APP_TAG, logString)
+
+        return result
+    }
+
+    private fun isPermissionAcquired(): kotlin.Boolean {
+        val stepPermKey = PermissionKey(StepCount.HEALTH_DATA_TYPE, PermissionType.READ)
+        val permissionKeys = mutableSetOf(stepPermKey)
+
+        val pmsManager = HealthPermissionManager(mStore)
+
+        try{
+            val resultMap = pmsManager.isPermissionAcquired(permissionKeys)
+            return resultMap[stepPermKey] ?: false
+        }
+        catch(e: Exception){
+            Log.e(APP_TAG, "isPermissionAcquired fail", e)
+        }
+
+        return false
     }
 
     private fun requestPermission() {
