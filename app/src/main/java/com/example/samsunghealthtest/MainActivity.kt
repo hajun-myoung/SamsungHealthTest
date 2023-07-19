@@ -24,6 +24,7 @@ package com.example.samsunghealthtest
 
 import android.os.Bundle
 import android.util.Log
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.samsung.android.sdk.healthdata.HealthConnectionErrorResult
 import com.samsung.android.sdk.healthdata.HealthConstants.StepCount
@@ -93,27 +94,34 @@ class MainActivity: AppCompatActivity() {
         // Try to request the permissions
         try {
             // Show user permission UI for allowing user to change options
-            pmsManager.requestPermissions(mutableSetOf(stepPermissionKey), this)
-            // pmsManager.requestPermissions(mutableSetOf(stepPermissionKey, heartRatePermissionKey), this@MainActivity)
-            // ⬆️ If I got another permissions need to request
+            val permissionKeys = mutableSetOf(stepPermissionKey)
+
+            pmsManager.requestPermissions(permissionKeys, this)
                 .setResultListener { result: HealthPermissionManager.PermissionResult ->
                     Log.d(APP_TAG, "Permission has been requested. setResultListener callback is called.")
                     val resultMap = result.resultMap
                     Log.d(APP_TAG, resultMap.entries.toString())
 
                     if (resultMap.containsValue(Boolean.FALSE)) {
-                        /**
-                         * This if-statement means there are rejected permissions
-                         */
-//                        updateStepCountView("")
-//                        showPermissionAlarmDialog()
-                    } else {
-                        // Get the current step count and display it
-//                        mReporter.start()
+                        // When be rejected some permissions
+                        showPermissionAlarmDialog()
                     }
                 }
         } catch (e: java.lang.Exception) {
             Log.e(APP_TAG, "Permission setting has been failed", e)
         }
+
+    }
+
+    private fun showPermissionAlarmDialog()  {
+        if(isFinishing) {
+            return
+        }
+
+        val newAlert = AlertDialog.Builder(this)
+        newAlert.setTitle("Notice")
+            .setMessage("steps should be acquired")
+            .setPositiveButton("OK", null)
+            .show()
     }
 }
